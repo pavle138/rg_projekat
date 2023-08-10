@@ -67,6 +67,32 @@ struct ProgramState {
     void LoadFromFile(std::string filename);
 };
 
+unsigned int ucitaj_cubemapu(vector<std::string> faces){
+    unsigned int texture_id;
+    unsigned char* data;
+    glGenTextures(1,&texture_id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP,texture_id);
+    int sirina,visina,brKanala;
+    for (int i = 0; i < faces.size(); ++i) {
+        data= stbi_load(faces[i].c_str(),&sirina,&visina,&brKanala,0);
+        if(data){
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+i,0,GL_RGB,sirina,visina,0,GL_RGB,GL_UNSIGNED_BYTE,data);
+
+        }
+        else{
+            std::cerr<<"Greska pri ucitavanju cube mape" << endl;
+            return -1;
+        }
+        stbi_image_free(data);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_WRAP_R,GL_CLAMP_TO_EDGE);
+    return texture_id;
+};
+
 void ProgramState::SaveToFile(std::string filename) {
     std::ofstream out(filename);
     out << clearColor.r << '\n'
@@ -79,7 +105,7 @@ void ProgramState::SaveToFile(std::string filename) {
         << camera.Front.x << '\n'
         << camera.Front.y << '\n'
         << camera.Front.z << '\n';
-}
+};
 
 void ProgramState::LoadFromFile(std::string filename) {
     std::ifstream in(filename);
@@ -95,7 +121,7 @@ void ProgramState::LoadFromFile(std::string filename) {
            >> camera.Front.y
            >> camera.Front.z;
     }
-}
+};
 
 ProgramState *programState;
 
@@ -162,10 +188,13 @@ int main() {
     glCullFace(GL_BACK);
     // build and compile shaders
     // -------------------------
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
-
+    Shader skyboxShader("resources/shaders/skybox.vs","resources/shaders/skybox.fs");
     // load models
     // -----------
+    stbi_set_flip_vertically_on_load(false);
     Model ourModel("resources/objects/apokalipticni_grad_v2.obj");
     ourModel.SetShaderTextureNamePrefix("material.");
 
@@ -179,8 +208,71 @@ int main() {
     pointLight.linear = 0.09f;
     pointLight.quadratic = 0.032f;
 
+    float skyboxVertices[] = {
+            // positions
+            -1.0f,  1.0f, -1.0f,
+            -1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
 
+            -1.0f, -1.0f,  1.0f,
+            -1.0f, -1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f, -1.0f,  1.0f,
 
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+
+            -1.0f, -1.0f,  1.0f,
+            -1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f, -1.0f,  1.0f,
+            -1.0f, -1.0f,  1.0f,
+
+            -1.0f,  1.0f, -1.0f,
+            1.0f,  1.0f, -1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f,  1.0f, -1.0f,
+
+            -1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f,  1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f,  1.0f,
+            1.0f, -1.0f,  1.0f
+    };
+    unsigned int skyboxVAO, skyboxVBO;
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    vector<std::string> faces
+            {
+                    FileSystem::getPath("resources/objects/skybox/right.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/left.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/top.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/bottom.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/front.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/back.jpg")
+            };
+    unsigned int cubemapTexture = ucitaj_cubemapu(faces);
+    stbi_set_flip_vertically_on_load(true);
+    skyboxShader.use();
+    skyboxShader.setInt("skybox",0);
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
