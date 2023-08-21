@@ -39,7 +39,21 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+struct SpotLight {
+    glm::vec3 position;
+    glm::vec3 direction;
 
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+
+    float cutoff;
+    float cutoff_outer;
+
+    float constant;
+    float linear;
+    float quadratic;
+};
 struct PointLight {
     glm::vec3 position;
     glm::vec3 ambient;
@@ -59,6 +73,7 @@ struct ProgramState {
     glm::vec3 backpackPosition = glm::vec3(0.0f);
     float backpackScale = 1.0f;
     PointLight pointLight;
+    SpotLight spotLight;
     ProgramState()
             : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
 
@@ -91,7 +106,7 @@ unsigned int ucitaj_cubemapu(vector<std::string> faces){
     glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_WRAP_R,GL_CLAMP_TO_EDGE);
     return texture_id;
-};
+}
 
 void ProgramState::SaveToFile(std::string filename) {
     std::ofstream out(filename);
@@ -105,7 +120,7 @@ void ProgramState::SaveToFile(std::string filename) {
         << camera.Front.x << '\n'
         << camera.Front.y << '\n'
         << camera.Front.z << '\n';
-};
+}
 
 void ProgramState::LoadFromFile(std::string filename) {
     std::ifstream in(filename);
@@ -121,7 +136,7 @@ void ProgramState::LoadFromFile(std::string filename) {
            >> camera.Front.y
            >> camera.Front.z;
     }
-};
+}
 
 ProgramState *programState;
 
@@ -195,18 +210,32 @@ int main() {
     // load models
     // -----------
     stbi_set_flip_vertically_on_load(false);
-    Model ourModel("resources/objects/apokalipticni_grad_v2.obj");
+    Model ourModel("resources/objects/interrogation_konacno.obj");
     ourModel.SetShaderTextureNamePrefix("material.");
 
     PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
+    pointLight.position = glm::vec3(-0.9641f,46.802f ,2.4054f);
     pointLight.ambient = glm::vec3(1);
     pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
     pointLight.constant = 1.0f;
-    pointLight.linear = 0.09f;
-    pointLight.quadratic = 0.032f;
+    pointLight.linear = 0.009f;
+    pointLight.quadratic = 0.001f;
+
+    SpotLight& spotLight = programState->spotLight;
+    spotLight.position = glm::vec3(-10.435f,21.142f,-20.255f);
+    spotLight.direction=-normalize((spotLight.position-glm::vec3(0,10.46f,-30.156f)));
+    spotLight.ambient = glm::vec3(1);
+    spotLight.diffuse = glm::vec3(1.0, 1.0, 1.0);
+    spotLight.specular = glm::vec3(1.0, 1.0, 1.0);
+
+    spotLight.cutoff=glm::cos(glm::radians(20.0f));
+    spotLight.cutoff_outer=glm::cos(glm::radians(22.5f));
+
+    spotLight.constant = 1.0f;
+    spotLight.linear = 0.045f;
+    spotLight.quadratic = 0.0075f;
 
     float skyboxVertices[] = {
             // positions
@@ -297,7 +326,6 @@ int main() {
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
-        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
         ourShader.setVec3("pointLight.position", pointLight.position);
         ourShader.setVec3("pointLight.ambient", pointLight.ambient);
         ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
@@ -305,6 +333,18 @@ int main() {
         ourShader.setFloat("pointLight.constant", pointLight.constant);
         ourShader.setFloat("pointLight.linear", pointLight.linear);
         ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+
+        ourShader.setVec3("spotLight.position", spotLight.position);
+        ourShader.setVec3("spotLight.direction", spotLight.direction);
+        ourShader.setVec3("spotLight.ambient", spotLight.ambient);
+        ourShader.setVec3("spotLight.diffuse", spotLight.diffuse);
+        ourShader.setVec3("spotLight.specular", spotLight.specular);
+        ourShader.setFloat("spotLight.constant", spotLight.constant);
+        ourShader.setFloat("spotLight.linear", spotLight.linear);
+        ourShader.setFloat("spotLight.quadratic", spotLight.quadratic);
+        ourShader.setFloat("spotLight.cutoff", spotLight.cutoff);
+        ourShader.setFloat("spotLight.cutoff_outer", spotLight.cutoff_outer);
+
         ourShader.setVec3("viewPosition", programState->camera.Position);
         ourShader.setFloat("material.shininess", 32.0f);
         // view/projection transformations
@@ -322,8 +362,21 @@ int main() {
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
 
+        glDepthMask(GL_FALSE);
+        glDepthFunc(GL_LEQUAL);
+        skyboxShader.use();
+        skyboxShader.setMat4("view",glm::mat4(glm::mat3(view)));
+        skyboxShader.setMat4("projection",projection);
+        glBindVertexArray(skyboxVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP,cubemapTexture);
+        glDrawArrays(GL_TRIANGLES,0,36);
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
+
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
+
 
 
 
@@ -443,3 +496,4 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         }
     }
 }
+
