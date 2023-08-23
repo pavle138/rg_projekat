@@ -225,7 +225,7 @@ int main() {
 
     SpotLight& spotLight = programState->spotLight;
     spotLight.position = glm::vec3(-10.435f,21.142f,-20.255f);
-    spotLight.direction=-normalize((spotLight.position-glm::vec3(0,10.46f,-30.156f)));
+    spotLight.direction=normalize((glm::vec3(0,10.46f,-30.156f)-spotLight.position));
     spotLight.ambient = glm::vec3(1);
     spotLight.diffuse = glm::vec3(1.0, 1.0, 1.0);
     spotLight.specular = glm::vec3(1.0, 1.0, 1.0);

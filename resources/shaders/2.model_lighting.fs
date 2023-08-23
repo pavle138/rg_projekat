@@ -31,12 +31,15 @@ struct SpotLight {
 struct Material {
     sampler2D texture_diffuse1;
     sampler2D texture_specular1;
-
+    sampler2D texture_normal1;
     float shininess;
 };
 in vec2 TexCoords;
 in vec3 Normal;
 in vec3 FragPos;
+in vec3 TangentLightPos;
+in vec3 TangentViewPos;
+in vec3 TangentFragPos;
 
 uniform SpotLight spotLight;
 uniform PointLight pointLight;
@@ -46,14 +49,14 @@ uniform vec3 viewPosition;
 // calculates the color when using a point light.
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
-    vec3 lightDir = normalize(light.position - fragPos);
+    vec3 lightDir = normalize(TangentLightPos - fragPos);
     // diffuse shading
     float diff = max(dot(normal, lightDir), 0.0);
     // specular shading
     vec3 reflectDir = reflect(-lightDir, normal);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     // attenuation
-    float distance = length(light.position - fragPos);
+    float distance = length(TangentLightPos - fragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
     // combine results
     vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, TexCoords));
@@ -66,14 +69,14 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 }
 vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
-    vec3 lightDir = normalize(light.position - fragPos);
+    vec3 lightDir = normalize(TangentLightPos - fragPos);
 
     float diff = max(dot(normal, lightDir), 0.0);
 
     vec3 reflectDir = reflect(-lightDir, normal);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 
-    float distance = length(light.position - fragPos);
+    float distance = length(TangentLightPos - fragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
     float teta=dot(lightDir,normalize(-light.direction));
@@ -91,9 +94,10 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 
 void main()
 {
-    vec3 normal = normalize(Normal);
-    vec3 viewDir = normalize(viewPosition - FragPos);
-    vec3 result = CalcPointLight(pointLight, normal, FragPos, viewDir);
-    result+=CalcSpotLight(spotLight,normal,FragPos,viewDir);
+    vec3 normal = texture(material.texture_normal1,TexCoords).rgb;
+    normal=normalize(normal*2 -1.0);
+    vec3 viewDir = normalize(TangentViewPos - TangentFragPos);
+    vec3 result = CalcPointLight(pointLight, normal, TangentFragPos, viewDir);
+    result+=CalcSpotLight(spotLight,normal,TangentFragPos,viewDir);
     FragColor = vec4(result, 1.0);
 }
