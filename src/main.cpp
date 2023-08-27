@@ -291,12 +291,12 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     vector<std::string> faces
             {
-                    FileSystem::getPath("resources/objects/skybox/right.jpg"),
-                    FileSystem::getPath("resources/objects/skybox/left.jpg"),
-                    FileSystem::getPath("resources/objects/skybox/top.jpg"),
-                    FileSystem::getPath("resources/objects/skybox/bottom.jpg"),
-                    FileSystem::getPath("resources/objects/skybox/front.jpg"),
-                    FileSystem::getPath("resources/objects/skybox/back.jpg")
+                    FileSystem::getPath("resources/objects/skybox/8k_stars_milky_way_right.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/8k_stars_milky_way_left.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/8k_stars_milky_way_up.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/8k_stars_milky_way_down.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/8k_stars_milky_way_front.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/8k_stars_milky_way_back.jpg")
             };
     unsigned int cubemapTexture = ucitaj_cubemapu(faces);
     stbi_set_flip_vertically_on_load(true);
