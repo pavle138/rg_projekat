@@ -99,5 +99,8 @@ void main()
     vec3 viewDir = normalize(TangentViewPos - TangentFragPos);
     vec3 result = CalcPointLight(pointLight, normal, TangentFragPos, viewDir);
     result+=CalcSpotLight(spotLight,normal,TangentFragPos,viewDir);
-    FragColor = vec4(result, 1.0);
+    //     if(vec4(texture(material.texture_diffuse1,TexCoords)).a <0.3){
+    //         discard;
+    //     }
+    FragColor = vec4(result, vec4(texture(material.texture_diffuse1,TexCoords)).a);
 }
