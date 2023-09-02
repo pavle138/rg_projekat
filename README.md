@@ -14,6 +14,7 @@ Link za skidanje modela i tekstura: https://drive.google.com/file/d/1GshNHckEBa9
 - `X`,`Z`- za vertikalno kretanje (gore, dole)
 - `F1` - otvara ImGui za dodatna podešavanja
 - `ESC` - izlazak iz aplikacije
+- Sa `Background Color` u ImGui-ju se moze menjati boja za blending prozora na sceni (Skybox je aktivan pa ne utice na okolinu)
 
 ## Implementirane oblasti
 - Oblast grupe A:
