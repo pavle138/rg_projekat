@@ -5,18 +5,49 @@ layout (location = 2) in vec2 aTexCoords;
 layout (location = 3) in vec3 aTangent;
 layout (location = 4) in vec3 biTangent;
 
+struct PointLight {
+    vec3 position;
+
+    vec3 specular;
+    vec3 diffuse;
+    vec3 ambient;
+
+    float constant;
+    float linear;
+    float quadratic;
+};
+struct SpotLight {
+    vec3 position;
+    vec3 direction;
+
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+
+    float cutoff;
+    float cutoff_outer;
+
+    float constant;
+    float linear;
+    float quadratic;
+};
+
 out vec2 TexCoords;
 out vec3 Normal;
 out vec3 FragPos;
 out vec3 TangentLightPos;
 out vec3 TangentViewPos;
 out vec3 TangentFragPos;
+out vec3 SpotLightDir;
+out vec3 SpotLightPos;
+out vec3 PointLightPos;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-uniform vec3 lightPos;
+uniform PointLight pointLight;
+uniform SpotLight spotLight;
 uniform vec3 viewPos;
 
 void main()
@@ -33,7 +64,9 @@ void main()
     vec3 B = cross(N,T);
 
     mat3 TBN = transpose(mat3(T,B,N));
-    TangentLightPos = TBN * lightPos;
+    SpotLightDir = TBN * spotLight.direction;
+    SpotLightPos= TBN * spotLight.position;
+    PointLightPos= TBN * pointLight.position;
     TangentViewPos = TBN * viewPos;
     TangentFragPos = TBN * FragPos;
 

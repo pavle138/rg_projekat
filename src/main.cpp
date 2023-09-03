@@ -29,6 +29,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+bool blinn=false;
 
 // camera
 
@@ -291,12 +292,12 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     vector<std::string> faces
             {
-                    FileSystem::getPath("resources/objects/skybox/8k_stars_milky_way_right.jpg"),
-                    FileSystem::getPath("resources/objects/skybox/8k_stars_milky_way_left.jpg"),
-                    FileSystem::getPath("resources/objects/skybox/8k_stars_milky_way_up.jpg"),
-                    FileSystem::getPath("resources/objects/skybox/8k_stars_milky_way_down.jpg"),
-                    FileSystem::getPath("resources/objects/skybox/8k_stars_milky_way_front.jpg"),
-                    FileSystem::getPath("resources/objects/skybox/8k_stars_milky_way_back.jpg")
+                    FileSystem::getPath("resources/objects/skybox/px.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/nx.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/py.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/ny.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/pz.jpg"),
+                    FileSystem::getPath("resources/objects/skybox/nz.jpg")
             };
     unsigned int cubemapTexture = ucitaj_cubemapu(faces);
     stbi_set_flip_vertically_on_load(true);
@@ -344,6 +345,7 @@ int main() {
         ourShader.setFloat("spotLight.quadratic", spotLight.quadratic);
         ourShader.setFloat("spotLight.cutoff", spotLight.cutoff);
         ourShader.setFloat("spotLight.cutoff_outer", spotLight.cutoff_outer);
+        //ourShader.setBool("blinn",true);
 
         ourShader.setVec3("viewPosition", programState->camera.Position);
         ourShader.setFloat("material.shininess", 32.0f);
